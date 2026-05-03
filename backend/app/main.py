@@ -3,13 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import FRONTEND_URL
 from app.database import connect_db, close_db
+from app.routes import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     await connect_db()
     yield
-    # Shutdown
     await close_db()
 
 app = FastAPI(title="Team Task Manager API", lifespan=lifespan)
@@ -21,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 @app.get("/api/health")
 async def health_check():
