@@ -5,8 +5,13 @@ pool = None
 
 async def connect_db():
     global pool
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
-
+    # Railway PostgreSQL requires SSL
+    pool = await asyncpg.create_pool(
+        DATABASE_URL,
+        min_size=2,
+        max_size=10,
+        ssl='require'   # <-- add this
+    )
     # Ensure users table exists
     async with pool.acquire() as conn:
         await conn.execute("""
@@ -18,7 +23,6 @@ async def connect_db():
                 created_at TIMESTAMPTZ DEFAULT now()
             );
         """)
-
     return pool
 
 async def get_pool():
