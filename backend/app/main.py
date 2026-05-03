@@ -1,21 +1,27 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+from app.config import FRONTEND_URL
+from app.database import connect_db, close_db
 
-load_dotenv()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await connect_db()
+    yield
+    # Shutdown
+    await close_db()
 
-app = FastAPI(title="Team Task Manager API")
+app = FastAPI(title="Team Task Manager API", lifespan=lifespan)
 
-# Allow frontend origin (change in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173")],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @app.get("/api/health")
-def health_check():
+async def health_check():
     return {"status": "ok", "message": "Team Task Manager API is running"}
